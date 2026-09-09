@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CA70A Cyber Security Lab — Secure E-Commerce & Identity Protection</title>
+  <meta name="description" content="Secure e-commerce store with FIDO2 Passkeys, RFC 6238 TOTP, and multi-factor authentication identity protection." />
+  <meta property="og:title" content="CA70A Cyber Security Lab" />
+  <meta property="og:description" content="Secure e-commerce store with FIDO2 Passkeys, RFC 6238 TOTP, and multi-factor authentication identity protection." />
+  <meta property="og:type" content="website" />
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-container">
+      <div class="brand-wrapper" data-navigate="dashboard">
+        <div class="brand-symbol">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+        </div>
+        <div class="brand-text-group">
+          <span class="brand-logo">CA70A</span>
+          <span class="brand-subtitle">Cyber Security Lab</span>
+        </div>
+      </div>
+
+      <nav class="nav-links" id="nav-app-links">
+        <a href="#" class="nav-link" data-navigate="dashboard">Shop</a>
+        <a href="#" class="nav-link" data-navigate="security">Security Center</a>
+      </nav>
+
+      <div class="header-actions">
+        <div id="nav-auth-section" style="display: none; align-items: center; gap: 14px;">
+          <button type="button" class="btn-cart" id="btn-open-cart" title="Shopping Cart">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            <span class="cart-badge" id="cart-count-badge">0</span>
+          </button>
+
+          <div class="user-profile-chip" data-navigate="security" title="Open Security Center" style="cursor: pointer;">
+            <div class="user-avatar-circle" id="nav-user-initials">CA</div>
+            <span class="user-name-text" id="nav-user-name">User</span>
+          </div>
+
+          <button type="button" class="btn-secondary" id="btn-logout" style="padding: 6px 14px; font-size: 12px; width: auto;">
+            Sign Out
+          </button>
+        </div>
+
+        <div id="nav-guest-section" style="display: flex; align-items: center; gap: 10px;">
+          <button type="button" class="btn-secondary" data-navigate="login" style="padding: 6px 16px; font-size: 13px; width: auto;">
+            Sign In
+          </button>
+          <button type="button" class="btn-primary" data-navigate="register" style="padding: 6px 16px; font-size: 13px; width: auto;">
+            Register
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="marquee-strip">
+    <div class="marquee-track">
+      <span class="marquee-item">FIDO2 CERTIFIED</span>
+      <span class="marquee-dot">·</span>
+      <span class="marquee-item">RFC 6238 HMAC-SHA1</span>
+      <span class="marquee-dot">·</span>
+      <span class="marquee-item">W3C WEBAUTHN LEVEL 3</span>
+      <span class="marquee-dot">·</span>
+      <span class="marquee-item">AES-256 HARDWARE CRYPTO</span>
+      <span class="marquee-dot">·</span>
+      <span class="marquee-item">ZERO TRUST ARCHITECTURE</span>
+      <span class="marquee-dot">·</span>
+      <span class="marquee-item">NIST SP 800-63B ALIGNED</span>
+      <span class="marquee-dot">·</span>
+      <span class="marquee-item">CA70A CYBER SECURITY LAB</span>
+      <span class="marquee-dot">·</span>
+      <span class="marquee-item">EAL6+ SECURE ELEMENT</span>
+      <span class="marquee-dot">·</span>
+      <span class="marquee-item">ALL PRICES IN INR (₹)</span>
+      <span class="marquee-dot">·</span>
+      <span class="marquee-item">PAN-INDIA INSURED DELIVERY</span>
+    </div>
+  </div>
+
+  <main class="main-content">
+    <!-- LOGIN VIEW -->
+    <section class="app-view" id="view-login">
+      <div class="auth-card-container">
+        <div class="auth-header">
+          <span class="auth-brand-eyebrow">CA70A Cyber Security Lab</span>
+          <h1 class="auth-title">Secure access to your account</h1>
+          <p class="auth-subtitle">Sign in to access your protected security workspace.</p>
+        </div>
+
+        <div class="form-error" id="login-error-message" style="display: none;"></div>
+
+        <form id="form-login">
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email Address</label>
+            <input type="email" id="login-email" class="form-input" placeholder="officer@ca70a-lab.internal" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="login-password">Password</label>
+            <input type="password" id="login-password" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+          </div>
+
+          <button type="submit" class="btn-primary" id="btn-submit-login">
+            Sign In
+          </button>
+        </form>
+
+        <div class="auth-divider">
+          <span>or</span>
+        </div>
+
+        <button type="button" class="btn-secondary" id="btn-login-passkey-direct">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 11c0 3.866-2.5 7-6 7"></path>
+            <path d="M12 11c0-3.866 2.5-7 6-7"></path>
+            <path d="M12 11v10"></path>
+            <path d="M9 14h6"></path>
+          </svg>
+          Continue with Passkey
+        </button>
+
+        <div class="auth-footer-nav">
+          <span>Don't have an account? </span>
+          <a href="#" data-navigate="register">Create account</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- REGISTER VIEW -->
+    <section class="app-view" id="view-register">
+      <div class="auth-card-container">
+        <div class="auth-header">
+          <span class="auth-brand-eyebrow">CA70A Cyber Security Lab</span>
+          <h1 class="auth-title">Create Account</h1>
+          <p class="auth-subtitle">Register credentials to establish your security profile.</p>
+        </div>
+
+        <div class="form-error" id="register-error-message" style="display: none;"></div>
+
+        <form id="form-register">
+          <div class="form-group">
+            <label class="form-label" for="register-name">Full Name</label>
+            <input type="text" id="register-name" class="form-input" placeholder="Sarah Mitchell" required autocomplete="name">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="register-email">Email Address</label>
+            <input type="email" id="register-email" class="form-input" placeholder="s.mitchell@ca70a-lab.internal" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="register-password">Password (min 8 characters)</label>
+            <input type="password" id="register-password" class="form-input" placeholder="••••••••" required minlength="8" autocomplete="new-password">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="register-confirm-password">Confirm Password</label>
+            <input type="password" id="register-confirm-password" class="form-input" placeholder="••••••••" required minlength="8" autocomplete="new-password">
+          </div>
+
+          <button type="submit" class="btn-primary" id="btn-submit-register">
+            Continue to Authentication Method
+          </button>
+        </form>
+
+        <div class="auth-footer-nav">
+          <span>Already registered? </span>
+          <a href="#" data-navigate="login">Sign In</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- MFA SELECT VIEW -->
+    <section class="app-view" id="view-mfa-select">
+      <div class="auth-card-container" style="max-width: 540px;">
+        <div class="auth-header">
+          <span class="auth-brand-eyebrow">CA70A Cyber Security Lab</span>
+          <h1 class="auth-title">Choose your authentication method</h1>
+          <p class="auth-subtitle">Protect your account with an enterprise-grade second factor.</p>
+        </div>
+
+        <div class="mfa-selection-grid">
+          <div class="mfa-method-card selected" data-method="totp">
+            <div class="mfa-card-radio"></div>
+            <div class="mfa-card-body">
+              <div class="mfa-card-top-line">
+                <span class="mfa-card-title">Authenticator App</span>
+                <span class="mfa-card-badge">Recommended</span>
+              </div>
+              <p class="mfa-card-desc">
+                Generate secure time-based verification codes using an authenticator application.
+              </p>
+            </div>
+          </div>
+
+          <div class="mfa-method-card" data-method="email-otp">
+            <div class="mfa-card-radio"></div>
+            <div class="mfa-card-body">
+              <div class="mfa-card-top-line">
+                <span class="mfa-card-title">Email OTP</span>
+                <span class="mfa-card-badge">High Security</span>
+              </div>
+              <p class="mfa-card-desc">
+                Receive a one-time verification code through your registered email address.
+              </p>
+            </div>
+          </div>
+
+          <div class="mfa-method-card" data-method="passkey">
+            <div class="mfa-card-radio"></div>
+            <div class="mfa-card-body">
+              <div class="mfa-card-top-line">
+                <span class="mfa-card-title">Passkey</span>
+                <span class="mfa-card-badge">FIDO2 Standard</span>
+              </div>
+              <p class="mfa-card-desc">
+                Use your device, biometric authentication, PIN, or security key.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn-primary" id="btn-continue-mfa-selection">
+          Continue Setup
+        </button>
+
+        <div class="auth-footer-nav">
+          <a href="#" data-navigate="register">Back to credentials</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOTP SETUP VIEW -->
+    <section class="app-view" id="view-totp-setup">
+      <div class="auth-card-container" style="max-width: 500px;">
+        <div class="auth-header">
+          <span class="auth-brand-eyebrow">CA70A Cyber Security Lab</span>
+          <h1 class="auth-title">Authenticator App Configuration</h1>
+          <p class="auth-subtitle">Pair your device to generate RFC 6238 time-based verification codes.</p>
+        </div>
+
+        <div class="setup-steps-list">
+          <div class="step-item">
+            <span class="step-num">1</span>
+            <span>Open Google Authenticator, Microsoft Authenticator, or Authy.</span>
+          </div>
+          <div class="step-item">
+            <span class="step-num">2</span>
+            <span>Scan the QR code below or enter the Base32 secret key manually.</span>
+          </div>
+          <div class="step-item">
+            <span class="step-num">3</span>
+            <span>Enter the 6-digit code shown in your app to activate protection.</span>
+          </div>
+        </div>
+
+        <div class="qr-code-wrapper">
+          <div id="totp-qr-code-box"></div>
+          <span class="qr-service-label">CA70A Cyber Security Lab (RFC 6238 HMAC-SHA1)</span>
+        </div>
+
+        <div class="manual-secret-box">
+          <span class="manual-secret-label">Manual Secret Key:</span>
+          <div class="secret-key-display-row">
+            <span class="secret-key-code" id="totp-secret-key-display">JBSWY3DPEHPK3PXP</span>
+            <button type="button" class="btn-copy-secret" id="btn-copy-totp-secret">
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <div class="form-error" id="totp-enroll-error" style="display: none;"></div>
+
+        <form id="form-totp-enroll">
+          <div class="form-group">
+            <label class="form-label" for="totp-enroll-code">Enter 6-Digit Verification Code</label>
+            <input type="text" id="totp-enroll-code" class="form-input form-input-mono" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="000000" required autocomplete="one-time-code">
+          </div>
+
+          <button type="submit" class="btn-primary">
+            Verify & Activate Protection
+          </button>
+        </form>
+
+        <div class="auth-footer-nav">
+          <a href="#" data-navigate="mfa-select">Choose different method</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- EMAIL OTP SETUP VIEW -->
+    <section class="app-view" id="view-email-otp-setup">
+      <div class="auth-card-container" style="max-width: 540px;">
+        <div class="auth-header">
+          <span class="auth-brand-eyebrow">CA70A Cyber Security Lab</span>
+          <h1 class="auth-title">Email Passcode Verification</h1>
+          <p class="auth-subtitle">A verification code has been dispatched to <span id="email-otp-masked-recipient">your registered email</span>.</p>
+        </div>
+
+        <div id="email-otp-enroll-simulator"></div>
+
+        <div class="form-error" id="email-otp-enroll-error" style="display: none;"></div>
+
+        <form id="form-email-otp-enroll">
+          <div class="form-group">
+            <label class="form-label" for="email-otp-enroll-code">Enter 6-Digit Passcode</label>
+            <input type="text" id="email-otp-enroll-code" class="form-input form-input-mono" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="000000" required autocomplete="one-time-code">
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+            <button type="submit" class="btn-primary" style="flex: 2;">
+              Verify & Complete
+            </button>
+            <button type="button" class="btn-secondary" id="btn-resend-email-otp" style="flex: 1;">
+              Resend Code
+            </button>
+          </div>
+        </form>
+
+        <div class="auth-footer-nav">
+          <a href="#" data-navigate="mfa-select">Choose different method</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- PASSKEY SETUP VIEW -->
+    <section class="app-view" id="view-passkey-setup">
+      <div class="auth-card-container" style="max-width: 500px;">
+        <div class="auth-header">
+          <span class="auth-brand-eyebrow">CA70A Cyber Security Lab</span>
+          <h1 class="auth-title">Passkey Enrollment</h1>
+          <p class="auth-subtitle">Register a WebAuthn / FIDO2 credential linked to your device authenticator.</p>
+        </div>
+
+        <div id="passkey-setup-status-box"></div>
+
+        <div class="passkey-graphic-box">
+          <svg class="passkey-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 11c0 3.866-2.5 7-6 7"></path>
+            <path d="M12 11c0-3.866 2.5-7 6-7"></path>
+            <path d="M12 11v10"></path>
+            <path d="M9 14h6"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span class="passkey-graphic-title">Cryptographic Assertion Interface</span>
+          <p class="passkey-graphic-text">
+            Your browser will invoke Windows Hello, Apple Touch ID, or a FIDO2 hardware security key to store a cryptographic keypair locally.
+          </p>
+        </div>
+
+        <div class="form-error" id="passkey-enroll-error" style="display: none;"></div>
+
+        <button type="button" class="btn-primary" id="btn-register-passkey-device">
+          Register Passkey on This Device
+        </button>
+
+        <div class="auth-footer-nav">
+          <a href="#" data-navigate="mfa-select">Choose different method</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- MFA VERIFY VIEW -->
+    <section class="app-view" id="view-mfa-verify">
+      <div class="auth-card-container" style="max-width: 540px;">
+        <div class="auth-header">
+          <span class="auth-brand-eyebrow">CA70A Cyber Security Lab</span>
+          <h1 class="auth-title" id="mfa-verify-method-title">Identity Verification</h1>
+          <p class="auth-subtitle">Authentication required. Complete your second-factor verification to proceed.</p>
+        </div>
+
+        <div class="form-error" id="mfa-verify-error" style="display: none;"></div>
+
+        <form id="form-mfa-verify">
+          <div id="verify-totp-container" style="display: none;">
+            <div class="form-group">
+              <label class="form-label" for="verify-totp-code">Enter the 6-digit code shown in your authenticator app</label>
+              <input type="text" id="verify-totp-code" class="form-input form-input-mono" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="000000" autocomplete="one-time-code">
+            </div>
+          </div>
+
+          <div id="verify-email-container" style="display: none;">
+            <p style="font-size: 13px; color: var(--ink); margin-bottom: 14px; opacity: 0.8;">
+              Passcode dispatched to <span id="verify-email-masked-address" style="color: var(--ink); font-weight: 600;"></span>:
+            </p>
+            <div id="verify-email-simulator-container"></div>
+            <div class="form-group">
+              <label class="form-label" for="verify-email-otp-code">Enter 6-Digit Passcode</label>
+              <input type="text" id="verify-email-otp-code" class="form-input form-input-mono" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="000000" autocomplete="one-time-code">
+            </div>
+            <div style="margin-bottom: 18px;">
+              <button type="button" class="btn-secondary" id="btn-resend-verify-email-otp" style="font-size: 12px; padding: 8px 16px;">
+                Resend Passcode
+              </button>
+            </div>
+          </div>
+
+          <div id="verify-passkey-container" style="display: none; text-align: center; padding: 20px 0;">
+            <p style="font-size: 14px; color: var(--ink); margin-bottom: 22px; opacity: 0.8;">
+              Verify identity using your fingerprint, facial recognition, PIN, or hardware security key.
+            </p>
+            <button type="button" class="btn-primary" id="btn-trigger-passkey-verify">
+              Continue with Passkey
+            </button>
+          </div>
+
+          <button type="submit" class="btn-primary" id="btn-submit-mfa-verify">
+            Verify Identity
+          </button>
+        </form>
+
+        <div class="auth-footer-nav">
+          <a href="#" data-navigate="login">Return to credentials sign-in</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD / STORE VIEW -->
+    <section class="app-view" id="view-dashboard">
+      <div class="promo-banner-lilac">
+        <div class="promo-banner-content">
+          <span class="promo-badge">SALE</span>
+          <span class="promo-text">Special Offers: Up to 40% off on Laptops, Mobiles &amp; Home Appliances. Free express delivery on orders above ₹4,000.</span>
+        </div>
+        <button type="button" class="btn-magenta-promo" id="btn-promo-shop-now">Explore Deals</button>
+      </div>
+
+      <!-- BEAUTIFUL HERO SECTION -->
+      <div class="shop-hero-enhanced">
+        <div class="shop-hero-top-badges">
+          <div class="hero-shield-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            CA70A Cyber Security Lab
+          </div>
+          <div class="hero-pulse-badge">
+            <span class="hero-pulse-dot"></span>
+            Zero-Trust Storefront Active
+          </div>
+          <div class="hero-pulse-badge">
+            All Prices in INR (₹)
+          </div>
+        </div>
+
+        <div class="shop-hero-grid">
+          <div>
+            <h1 class="shop-hero-title-enhanced">
+              Shop Everything, <span class="shop-hero-title-gradient">Cryptographically Secured.</span>
+            </h1>
+            <p class="shop-hero-desc-enhanced">
+              Enterprise electronics, gadgets, clothing, and smart appliances. Every purchase is authenticated with military-grade FIDO2 Passkeys, WebCrypto SHA-256, and RFC 6238 TOTP.
+            </p>
+            <div class="hero-cta-group">
+              <button type="button" class="btn-hero-primary" id="btn-hero-explore">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="9" cy="21" r="1"></circle>
+                  <circle cx="20" cy="21" r="1"></circle>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+                Browse Products
+              </button>
+              <button type="button" class="btn-hero-secondary" data-navigate="security">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                Security Center
+              </button>
+            </div>
+            <div class="hero-trust-metrics">
+              <div class="hero-metric-item">
+                <span class="hero-metric-val">100%</span>
+                <span class="hero-metric-label">MFA Authenticated</span>
+              </div>
+              <div class="hero-metric-item">
+                <span class="hero-metric-val">₹0 Fee</span>
+                <span class="hero-metric-label">Pan-India Delivery</span>
+              </div>
+              <div class="hero-metric-item">
+                <span class="hero-metric-val">30 Days</span>
+                <span class="hero-metric-label">No-Questions Returns</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Spotlight Card in Hero -->
+          <div class="hero-spotlight-card" id="hero-spotlight-item">
+            <div class="spotlight-top">
+              <span class="spotlight-pill">Featured Deal</span>
+              <span style="font-family: var(--font-mono); font-size: 11px; color: rgba(255,255,255,0.7);">FIDO2 Verified</span>
+            </div>
+            <div class="spotlight-image-container">
+              <img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80" alt="MacBook Pro 16" class="spotlight-image" id="hero-spotlight-img">
+            </div>
+            <div class="spotlight-info">
+              <span class="spotlight-title" id="hero-spotlight-title">MacBook Pro 16&quot;</span>
+              <span class="spotlight-price" id="hero-spotlight-price">₹2,49,900</span>
+              <span style="font-size: 12px; color: rgba(255,255,255,0.7);">M3 Pro · 18 GB RAM · 512 GB SSD</span>
+            </div>
+            <div class="spotlight-action-row">
+              <span>Click to view details</span>
+              <span style="font-weight: 600; color: #dceeb1;">View Details →</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="shop-controls-bar">
+        <div class="category-pills">
+          <button type="button" class="category-pill active" data-category="all">All Products</button>
+          <button type="button" class="category-pill" data-category="laptops">Laptops &amp; Tablets</button>
+          <button type="button" class="category-pill" data-category="mobiles">Mobiles</button>
+          <button type="button" class="category-pill" data-category="accessories">Accessories</button>
+          <button type="button" class="category-pill" data-category="clothing">Clothing</button>
+          <button type="button" class="category-pill" data-category="appliances">Home Appliances</button>
+        </div>
+
+        <div class="search-box-wrapper">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" class="search-input" id="shop-search-input" placeholder="Search products in ₹...">
+        </div>
+      </div>
+
+      <!-- Products Grid -->
+      <div class="products-grid" id="products-grid"></div>
+
+      <!-- Informative Blocks -->
+      <div class="color-block-section">
+        <div class="color-block-inner">
+          <span class="color-block-eyebrow">WHY SHOP WITH US</span>
+          <h2 class="color-block-headline">Premium Products, Verified Identity</h2>
+          <p class="color-block-subhead">
+            Every purchase is protected by multi-factor authentication. Your account, your orders, and your payment details are secured by the same cryptographic standards used in enterprise security systems.
+          </p>
+          <div class="color-block-actions">
+            <button type="button" class="btn-primary" data-navigate="security">View My Security</button>
+            <button type="button" class="btn-secondary" data-navigate="security">How It Works</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="color-block-section-navy">
+        <div class="color-block-inner">
+          <span class="color-block-eyebrow">FAST DELIVERY</span>
+          <h2 class="color-block-headline">Next-Day Delivery Across Major Indian Metros</h2>
+          <p class="color-block-subhead">
+            Order before midnight and receive your electronics, clothing, or appliances the very next day. Free delivery on all orders above ₹4,000. Tracked and insured nationwide.
+          </p>
+          <div class="color-block-actions">
+            <button type="button" class="btn-primary" data-navigate="dashboard">Browse Products</button>
+            <button type="button" class="btn-secondary" data-navigate="dashboard">View Offers</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="color-block-section-coral">
+        <div class="color-block-inner">
+          <span class="color-block-eyebrow">EASY RETURNS</span>
+          <h2 class="color-block-headline">30-Day Hassle-Free Returns</h2>
+          <p class="color-block-subhead">
+            Changed your mind? No problem. Return any product within 30 days for a full refund — no questions asked. Our customer care team is available around the clock.
+          </p>
+          <div class="color-block-actions">
+            <button type="button" class="btn-primary" data-navigate="dashboard">Start Shopping</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUCT DETAILS VIEW / PAGE -->
+    <section class="app-view" id="view-product-details">
+      <div class="product-details-container" id="product-details-container">
+        <!-- Rendered dynamically by App.renderProductDetails() -->
+      </div>
+    </section>
+
+    <!-- SECURITY CENTER VIEW -->
+    <section class="app-view" id="view-security">
+      <div class="security-dashboard-header">
+        <span class="sec-header-tag">CA70A Cyber Security Lab / Governance</span>
+        <h1 class="sec-header-title">Security Center</h1>
+        <p class="sec-header-desc">
+          Centralized management of account protection, cryptographic standards enforcement, and multi-factor authentication policies.
+        </p>
+      </div>
+
+      <div class="security-grid-cards">
+        <div class="security-card">
+          <div class="security-card-header">
+            <h2 class="security-card-title">Primary Authentication</h2>
+            <span class="sec-status-pill">Enabled</span>
+          </div>
+          <div class="sec-info-row">
+            <span class="sec-info-label">Account Holder</span>
+            <span class="sec-info-val" id="sec-user-name">Security Officer</span>
+          </div>
+          <div class="sec-info-row">
+            <span class="sec-info-label">Email Identifier</span>
+            <span class="sec-info-val" id="sec-user-email">officer@ca70a-lab.internal</span>
+          </div>
+          <div class="sec-info-row">
+            <span class="sec-info-label">Password Hashing</span>
+            <span class="sec-info-val">SHA-256 (Web Crypto API)</span>
+          </div>
+          <div class="sec-info-row">
+            <span class="sec-info-label">Salt Entropy</span>
+            <span class="sec-info-val">128-bit Cryptographic Random</span>
+          </div>
+        </div>
+
+        <div class="security-card">
+          <div class="security-card-header">
+            <h2 class="security-card-title" id="sec-mfa-method-title">Multi-Factor Authentication</h2>
+            <span class="sec-status-pill" id="sec-mfa-status-pill">Protected</span>
+          </div>
+          <div class="sec-info-row">
+            <span class="sec-info-label">Policy Status</span>
+            <span class="sec-info-val">Active</span>
+          </div>
+          <div class="sec-info-row">
+            <span class="sec-info-label">Enrolled Date</span>
+            <span class="sec-info-val" id="sec-mfa-enrolled-date">Active Session</span>
+          </div>
+
+          <div id="sec-mfa-tech-details"></div>
+
+          <div class="sec-action-box">
+            <button type="button" class="btn-secondary" id="btn-change-mfa">
+              Change Authentication Method
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="educational-table-card">
+        <h3 class="edu-title">Multi-Factor Authentication Governance &amp; Threat Analysis</h3>
+        <p class="edu-sub">
+          Cryptographic standard, phishing vulnerability resistance, and hardware prerequisites across authentication vectors.
+        </p>
+
+        <div class="edu-table-wrapper">
+          <table class="edu-table">
+            <thead>
+              <tr>
+                <th>Authentication Vector</th>
+                <th>Underlying Standard</th>
+                <th>Phishing Resistance</th>
+                <th>Offline Operation</th>
+                <th>Hardware Prerequisite</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Password Authentication</strong></td>
+                <td>Knowledge factor (Single)</td>
+                <td><span class="table-badge">Vulnerable</span></td>
+                <td>Yes</td>
+                <td>None</td>
+              </tr>
+              <tr>
+                <td><strong>Email OTP</strong></td>
+                <td>Out-of-band TLS Delivery</td>
+                <td><span class="table-badge">Standard</span></td>
+                <td>No</td>
+                <td>Mail Client</td>
+              </tr>
+              <tr>
+                <td><strong>Authenticator App (TOTP)</strong></td>
+                <td>RFC 6238 HMAC-SHA1</td>
+                <td><span class="table-badge">High</span></td>
+                <td>Yes</td>
+                <td>Authenticator Device</td>
+              </tr>
+              <tr>
+                <td><strong>Passkey / WebAuthn</strong></td>
+                <td>FIDO2 / W3C PublicKeyCredential</td>
+                <td><span class="table-badge">Cryptographically Bound</span></td>
+                <td>Yes</td>
+                <td>Secure Enclave / Key</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- CART DRAWER -->
+  <div class="cart-overlay" id="cart-drawer-overlay">
+    <div class="cart-drawer">
+      <div class="cart-drawer-header">
+        <h3 class="cart-drawer-title">Shopping Cart</h3>
+        <button type="button" class="btn-close-drawer" id="btn-close-cart">✕</button>
+      </div>
+      <div class="cart-drawer-body" id="cart-items-container"></div>
+      <div class="cart-drawer-footer">
+        <div class="cart-summary-line">
+          <span>Subtotal</span>
+          <span id="cart-subtotal-amount">₹0</span>
+        </div>
+        <div class="cart-summary-line">
+          <span>MFA Protection Verified</span>
+          <span style="color: #1ea64a; font-weight: 600;">Active (Zero-Trust)</span>
+        </div>
+        <div class="cart-summary-line total">
+          <span>Total (incl. taxes)</span>
+          <span id="cart-total-amount">₹0</span>
+        </div>
+        <button type="button" class="btn-primary" id="btn-cart-checkout">
+          Authenticate &amp; Order
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECKOUT AUTHORIZATION MODAL -->
+  <div class="modal-backdrop" id="modal-checkout">
+    <div class="modal-box">
+      <h3 class="modal-title">Transaction Authorized</h3>
+      <p class="modal-subtitle">
+        Your order was cryptographically authenticated and authorized under CA70A security protocols.
+      </p>
+      <div class="sec-info-row">
+        <span class="sec-info-label">Authenticated Account</span>
+        <span class="sec-info-val" id="checkout-user-email">officer@ca70a-lab.internal</span>
+      </div>
+      <div class="sec-info-row">
+        <span class="sec-info-label">MFA Verification</span>
+        <span class="sec-info-val" id="checkout-mfa-pill">TOTP</span>
+      </div>
+      <div class="sec-info-row">
+        <span class="sec-info-label">Order Items</span>
+        <span class="sec-info-val" id="checkout-items-summary">1 item · ₹2,49,900</span>
+      </div>
+      <div class="modal-actions-row">
+        <button type="button" class="btn-primary" id="btn-confirm-order">
+          Confirm Order
+        </button>
+        <button type="button" class="btn-secondary" id="btn-close-checkout-modal">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RE-AUTHENTICATION MODAL -->
+  <div class="modal-backdrop" id="modal-reauth">
+    <div class="modal-box">
+      <h3 class="modal-title">Re-Authentication Required</h3>
+      <p class="modal-subtitle">
+        Modifying your multi-factor authentication configuration is a sensitive security operation. Please re-authenticate your current password.
+      </p>
+      <div class="form-error" id="reauth-error-message" style="display: none;"></div>
+      <form id="form-reauth">
+        <div class="form-group">
+          <label class="form-label" for="reauth-password-input">Current Password</label>
+          <input type="password" id="reauth-password-input" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <div class="modal-actions-row">
+          <button type="submit" class="btn-primary">
+            Confirm Password
+          </button>
+          <button type="button" class="btn-secondary" id="btn-close-reauth-modal">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast-container" id="app-toast"></div>
+
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-left">
+        <span class="footer-brand">CA70A CYBER SECURITY LAB</span>
+        <span class="footer-status-pill" id="sys-user-pill">Status: Unauthenticated</span>
+        <span class="footer-status-pill" id="sys-mfa-pill">MFA: Inactive</span>
+      </div>
+      <div>
+        <button type="button" class="btn-clear-creds" id="btn-clear-credentials">
+          Clear Stored Credentials
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/storage.js"></script>
+  <script src="js/totp.js"></script>
+  <script src="js/email-otp.js"></script>
+  <script src="js/webauthn.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/mfa.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
