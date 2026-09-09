@@ -1,6 +1,0 @@
-{
-  "name": "CA70A Cyber Security Lab",
-  "description": "Secure e-commerce store with FIDO2 Passkeys, RFC 6238 TOTP, and multi-factor authentication identity protection.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
